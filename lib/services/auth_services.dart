@@ -9,23 +9,29 @@ class AuthServices {
   static String baseUrl = ApiConfig.baseUrl;
 
   Future<ResponseModel> login({ required String username, required String password }) async {
-    final String url = '$baseUrl/authentications';
+    try {
+      final String url = '$baseUrl/authentications';
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+        },
+        body: jsonEncode({
+          "username": username,
+          "password": password,
+        })
+      );
 
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-      },
-      body: jsonEncode({
-        "username": username,
-        "password": password,
-      })
-    );
-
-    final Map<String, dynamic> responseJson = jsonDecode(response.body); 
-    if(response.statusCode == 201) {
-      // todo: save accessToken to SharedStorage
-    }
+      final Map<String, dynamic> responseJson = jsonDecode(response.body); 
+      if(response.statusCode == 201) {
+        // todo: save accessToken to SharedStorage
+      }
     return ResponseModel.fromJson(responseJson);
+    } catch(err) {
+      return ResponseModel(
+        status: "failed",
+        message: "tidak dapat terhubung ke server"
+      );
+    }
   }
 }

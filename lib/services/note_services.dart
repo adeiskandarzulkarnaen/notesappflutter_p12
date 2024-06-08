@@ -26,8 +26,8 @@ class NoteServices {
         "body": body,
       }),
     );
-
-    return ResponseModel.fromJson(jsonDecode(response.body));
+    final responseJson = jsonDecode(response.body);
+    return ResponseModel.fromJson(responseJson);
   }
 
   // todo: return ResponseModel

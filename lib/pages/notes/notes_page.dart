@@ -1,7 +1,10 @@
 
 import 'package:flutter/material.dart';
+import 'package:notesappflutter/models/note_model.dart';
+import 'package:notesappflutter/pages/auth/login_page.dart';
 import 'package:notesappflutter/pages/notes/add_note_page.dart';
 import 'package:notesappflutter/pages/notes/detail_note_page.dart';
+import 'package:notesappflutter/services/note_services.dart';
 
 class NotesPage extends StatefulWidget {
   const NotesPage({super.key});
@@ -62,46 +65,65 @@ class _NotesPageState extends State<NotesPage> {
                 ),
               ) 
             ),
-            onPressed: () {
-              // todo: exit push to login
-            },
+            onPressed: onExitButtonTapped,
             icon: const Icon(Icons.exit_to_app),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: ()async  {
+          await Navigator.push(
             context, 
-            MaterialPageRoute(builder: (context) {
-              return const AddNotePage();
-            },)
+            MaterialPageRoute(
+              builder: (context) => const AddNotePage(),
+            ),
           );
+          setState(() {});
         },
         child: const Icon(Icons.note_add),
       ),
-      body: ListView.builder(
-        itemCount: 12,
-        itemBuilder: (context, index) {
-          return NoteCard(noteId: index.toString());
-        },
-      ),
+    );
+  }
+
+  void onExitButtonTapped() async {
+    await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Exit"),
+          content: const Text("Are you sure you want to exit from this appllication?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              child: const Text("Confirm"),
+              onPressed: () => Navigator.pushReplacement(
+                context, 
+                MaterialPageRoute(builder: (context) => const LoginPage())
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 
 class NoteCard extends StatelessWidget {
-  final String noteId;
-  const NoteCard({super.key, required this.noteId});
+  final NoteModel note;
+  final NoteServices noteServices;
+  const NoteCard({super.key, required this.note, required this.noteServices});
 
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: Key(noteId), // Key Harus unik
+      key: Key(note.id), // Key Harus unik
       confirmDismiss: (direction) => _confirmDismiss(context),
       onDismissed: (direction) async {
-        // todo: hapus note dari database, http.delete()
+        await noteServices.deleteNotes(noteId: note.id);
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -120,14 +142,13 @@ class NoteCard extends StatelessWidget {
           onTap: () {
             Navigator.push(
               context, 
-              MaterialPageRoute(builder: (context) {
-                // todo: gunakan NotesModel sebagai param
-                return DetailNotePage();
-              },)
+              MaterialPageRoute(
+                builder: (context) => DetailNotePage(note: note),
+              ),
             );
           },
           title: Text(
-            "judul note",
+            note.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -138,7 +159,7 @@ class NoteCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  ["flutter", 'android', "ios"].map((tag) => "#$tag").join(' '),
+                  note.tags.map((tag) => "#$tag").join(' '),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
